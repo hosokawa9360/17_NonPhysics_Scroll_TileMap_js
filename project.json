@@ -1,0 +1,21 @@
+{
+    "project_type": "javascript",
+
+    "debugMode": 0,
+    "showFPS": false,
+    "frameRate": 60,
+    "id": "gameCanvas",
+    "renderMode": 0,
+    "engineDir": "",
+    "modules": ["cocos2d", "external"],
+
+    "jsList": [
+        "src/resource.js",
+        "src/player.js",
+        "src/terrain.js",
+        "src/objects.js",
+        "src/scroll_bg.js",
+        "src/tiledmap.js",
+        "src/app.js"
+    ]
+}
