@@ -1,5 +1,5 @@
 //プレイヤークラス
-var Objects = cc.Class.extend({ // cc.Classを継承
+var Objects = cc.Node.extend({ // cc.Classを継承
    sprite: null, // スプライトを保持
    spriteSheet: null,
    body: null, // bodyを保持

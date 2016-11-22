@@ -1,90 +1,186 @@
-
 // define enum for runner status
-if(typeof RunnerStat == "undefined") {
-    var RunnerStat = {};
+var FloorHeight = 26;
+var GravityForce = -0.45;
+var GroundResponsiveness = 1.35;
+var JumpPower = 11.0;
+var AirborneTime = 0.15; //空挺時間
 
-    RunnerStat.running = 0;
-    RunnerStat.jumpUp = 1;
-    RunnerStat.jumpDown = 2;
-    RunnerStat.idling = 3;
-    RunnerStat.landing = 4;
+if (typeof PlayerStatus == "undefined") {
+   var PlayerStatus = {};
+
+   PlayerStatus.idling = 0;
+   PlayerStatus.running = 1;
+   PlayerStatus.jumpUp = 2;
+   PlayerStatus.jumpDown = 3;
+
+
 };
 
 //プレイヤークラス
-var Player = cc.Class.extend({ // cc.Classを継承
+var Player = cc.Node.extend({ // cc.Classを継承
    sprite: null, // スプライトを保持
    spriteSheet: null,
-   body: null, // bodyを保持
-   shape: null, // Shapeを保持
    runningAction: null,
-   startPos:null,
-   status:null,
+   startPos: null,
+   status: null,
+   vx: 0,
+   vy: 0,
+   firstlanding: false,
 
-   ctor: function(parent, posX, posY, tag) { // コンストラクタ
+   ctor: function(posX, posY) {
+      this._super();
+      this.init(posX, posY);
 
-     this.startPos = cc.p(posX,posY);
+      this.status = PlayerStatus.idling;
+   },
 
-     this.spriteSheet = new cc.SpriteBatchNode(res.player_png);
-     // ランニングアクションを初期化
-     var animFrames = [];
-     for (var i = 0; i < 4; i++) {
-        var spriteFrame = new cc.SpriteFrame(res.player_png, cc.rect(70 * i, 0, 70, 90));
-          var str = "player" + i;
-        cc.spriteFrameCache.addSpriteFrame(spriteFrame,  str);
-        var frame = cc.spriteFrameCache.getSpriteFrame(str);
-        animFrames.push(frame);
+   init: function(posX, posY) {
+      this._super();
+      this.vy += GravityForce;
+      this.startPos = cc.p(posX, posY);
+
+      this.spriteSheet = new cc.SpriteBatchNode(res.player_png);
+      // ランニングアクションを初期化
+      var animFrames = [];
+      for (var i = 0; i < 4; i++) {
+         var spriteFrame = new cc.SpriteFrame(res.player_png, cc.rect(70 * i, 0, 70, 90));
+         var str = "player" + i;
+         cc.spriteFrameCache.addSpriteFrame(spriteFrame, str);
+         var frame = cc.spriteFrameCache.getSpriteFrame(str);
+         animFrames.push(frame);
       }
       var animation = new cc.Animation(animFrames, 0.1);
+
       this.runningAction = new cc.RepeatForever(new cc.Animate(animation));
 
       this.sprite = cc.Sprite.create('#player0');
-      var size =   this.sprite.getContentSize(); // スプライトのサイズを取得
-       this.sprite.setScale(35/size.width, 45/size.height);
-       this.sprite.setContentSize(cc.size(35, 45));
+      var size = this.sprite.getContentSize(); // スプライトのサイズを取得
+      this.sprite.setScale(35 / size.width, 45 / size.height);
+      this.sprite.setContentSize(cc.size(35, 45));
       //this.sprite.setScale(0.5,0.5)
       this.sprite.runAction(this.runningAction);
-      var size =   this.sprite.getContentSize(); // スプライトのサイズを取得
-      this.body = new cp.Body(1, cp.momentForBox(1, size.width, size.height));
-      this.body.setPos(cp.v(posX, posY));
-      gameLayer.addChild(  this.sprite, 0);
-        this.sprite.setPosition(posX, posY);
-      space.addBody(this.body);
-      var shape = new cp.BoxShape(this.body, size.width, size.height);
-      shape.setFriction(1);
-      shape.setElasticity(0);
-      shape.tag = tag;
-      shape.setCollisionType(shape.tag);
-      shape.image =   this.sprite;
-      space.addShape(shape);
-      shapeArray.push(shape);
+      var size = this.sprite.getContentSize(); // スプライトのサイズを取得
+      this.sprite.tag = SpriteTag.player;
+      //スプライトをこのノードの中央におく
+      this.sprite.setPosition(this.sprite.width / 2, this.sprite.height / 2);
+
+      this.setPosition(posX, posY);
+      this.addChild(this.sprite, 0);
+
+      this.scheduleUpdate();
+      return true;
 
    },
 
-   jump:function () {
-       cc.log("jump");
-       if (this.stat == RunnerStat.running) {
-           this.body.applyImpulse(cp.v(0, 250), cp.v(0, 0));
-           this.stat = RunnerStat.jumpUp;
-           this.sprite.stopAllActions();
-        //   this.sprite.runAction(this.jumpUpAction);
-
-           cc.audioEngine.playEffect(res.jump_mp3);
-
-       }
+   clamp: function(val, min, max) {
+      return Math.max(min, Math.min(max, val))
    },
 
    update: function(dt) {
 
+     console.log("befor update status:",this.status);
+     console.log("befor update vy:",this.vy);
+
+  if (this.y > FloorHeight)
+      this.vy += GravityForce;
+
+  if( this.vy < 0 ) {
+    this.status = PlayerStatus.jumpDown;
+    AirborneTime += dt;
+  }
+      this.x += this.vx;
+      this.y += this.vy;
+
+      this.x = this.clamp(this.x, 0.0, 1030.0);
+      this.y = Math.max(this.y, FloorHeight);
+
+      if (Math.abs(this.vx) < 0.0001) this.vx = 0.0;
+      if (Math.abs(this.vy) < 0.0001) this.vy = 0.0;
+    //  if(this.vx == 0.0 && this.vy == 0.0) this.status = PlayerStatus.idling;
+
+      if (this.y <= FloorHeight &&  this.status == PlayerStatus.jumpDown) {
+         AirborneTime = 0.0;
+         this.status = PlayerStatus.idling;
+         this.vy = Math.max(this.vy, 0.0);
+      }
+
+      //  console.log("this.x:", this.x);
+
+      // ground control (to major tom)
+      if (AirborneTime == 0.0) {
+
+      } else { // air control
+
+      }
+
+
+
    },
 
-   getDistanceX: function() {
-      return this.sprite.getPositionX() - this.startPos.x;
-   },
-   getDistanceY: function() {
-      return this.sprite.getPositionY() - this.startPos.y;
-   },
+   LeftRightAxis: function(axis) {
+
+ console.log("status:", this.status);
+      if (this.status == PlayerStatus.idling
+        || this.status == PlayerStatus.running
+        || this.status == PlayerStatus.jumpUp
+      ) {
+
+
+         this.vx += GroundResponsiveness * axis;
+
+         this.vx = this.clamp(this.vx, -3.0, 3.0);
+         if (this.vx < -0.1)
+            this.sprite.setFlippedX(true);
+         if (this.vx > 0.1)
+            this.sprite.setFlippedX(false);
+
+          if(this.status != PlayerStatus.jumpUp)  this.status == PlayerStatus.running;
+
+      }
+
+},
+
+goLeft: function(axis) {
+   var _axis = axis || -1.0; // axis が渡されていなかったらデフォルト
+   this.LeftRightAxis(_axis);
+},
+
+goRight: function(axis) {
+   var _axis = axis || 1.0; // axis が渡されていなかったらデフォルト
+   this.LeftRightAxis(_axis);
+},
+
+goStop: function(axis) {
+   var _axis = axis || 0.0; // axis が渡されていなかったらデフォルト
+   this.vx = 0;
+},
+
+getDistanceX: function() {
+   return this.sprite.getPositionX() - this.startPos.x;
+},
+getDistanceY: function() {
+   return this.sprite.getPositionY() - this.startPos.y;
+},
+
+jump: function() {
+   console.log("jump:status:", this.status);
+   if (this.status == PlayerStatus.idling  || this.status == PlayerStatus.running) {
+      this.vy += JumpPower;
+
+    //  this.sprite.stopAllActions();
+      //   this.sprite.runAction(this.jumpUpAction);
+
+      cc.audioEngine.playEffect(res.jump_mp3);
+
+      this.status = PlayerStatus.jumpUp;
+
+   }
+},
+
 
 });
+
+
 
 
 /*

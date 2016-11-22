@@ -1,18 +1,16 @@
 var Scroll_BG = cc.Layer.extend({
-//  parent: null,
    spriteBG1: null,
    spriteBG2: null,
    spriteBGwidth: 0,
 
    bgIndex: 0,
 
-   ctor: function(parent) {
+   ctor: function() {
       this._super();
-  //    this.parent = parent;
-      this.init(parent);
+      this.init();
    },
 
-   init: function(parent) {
+   init: function() {
       this._super();
 
       var winsize = cc.director.getWinSize();
@@ -27,9 +25,9 @@ var Scroll_BG = cc.Layer.extend({
       this.spriteBG2 = new cc.Sprite(res.background_png);
       this.spriteBG2.setAnchorPoint(0, 0);
       this.spriteBG2.setPosition(this.spriteBGwidth, 0);
+
       this.addChild(this.spriteBG2);
 
-      parent.addChild(this, 0);
       this.scheduleUpdate();
    },
 

@@ -8,15 +8,13 @@ var Tiledmap = cc.Layer.extend({
    //  mapHeight: 0,
    //  tileWidth: 0,
    //  tileHeight: 0,
-   space: null,
    objects: [],
-
+spriteSheet: null,
 
    ctor: function(parent) {
       this._super();
 
 //      this.map = new cc.TMXTiledMap(res.map00_tmx);
-
     this.map = new cc.TMXTiledMap(res.map_test_tmx);
       this.init(parent);
 
@@ -36,12 +34,18 @@ var Tiledmap = cc.Layer.extend({
       var mapWidth = this.map.getMapSize().width;
       var mapHeight = this.map.getMapSize().height;
 
+      this.spriteSheet = new cc.SpriteBatchNode(res.terrain_png);
+      for (var i = 0; i < 4; i++) {
+         var spriteFrame = new cc.SpriteFrame(res.terrain_png, cc.rect(24 * i, 0, 24, 24));
+           var str = "terrain" + i;
+         cc.spriteFrameCache.addSpriteFrame(spriteFrame,  str);
+       }
+
+
       // console.log("mapWidth:", mapWidth)
       // console.log("mapHeight:", mapHeight)
 
       var TerrainLayer = this.map.getLayer("Terrain");
-      // var mappa = this.map.getPropertiesForGID(  this.map.getLayer( "layerName" ).getTileGIDAt( 0,0 ) );
-      // console.log("mappa",mappa);
       for (i = 0; i < mapWidth; i++) {
          for (j = 0; j < mapHeight; j++) {
             //タイルコードを取得できる
@@ -54,7 +58,12 @@ var Tiledmap = cc.Layer.extend({
                   // 当たり判定するオブジェクトがあるかどうかプロパティをチェックする
                   var tileXPositon = i * tileWidth + tileWidth / 2;
                   var tileYPosition = (mapHeight * tileHeight) - ((j + 1) * tileHeight) + tileHeight / 2;
-                  var terrain = new Terrain(parent, tileXPositon, tileYPosition, SpriteTag.terrain);
+                  var sprite = cc.Sprite.create('#terrain0');
+                  sprite.setPosition(tileXPositon, tileYPosition);
+                  sprite.tag = SpriteTag.terrain;
+                  this.addChild(sprite, 0);
+                  this.objects.push(sprite);
+
                }
             }
          }
@@ -75,8 +84,12 @@ var Tiledmap = cc.Layer.extend({
                   // console.log("tXP", tileXPositon, "tYP", tileYPosition,"category:",properties["category"]);
                   var tileXPositon = i * tileWidth + tileWidth / 2;
                   var tileYPosition = (mapHeight * tileHeight) - ((j + 1) * tileHeight) + tileHeight / 2;
+                  var sprite = cc.Sprite.create('#terrain0');
+                  sprite.setPosition(tileXPositon, tileYPosition);
+                  sprite.tag = Number(properties["category"]);
+                  this.addChild(sprite, 0);
+                  this.objects.push(sprite);
 
-                  var objects = new Objects(parent, tileXPositon, tileYPosition,Number(properties["category"])  );
                }
             }
          }

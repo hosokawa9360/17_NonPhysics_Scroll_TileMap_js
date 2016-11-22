@@ -9,8 +9,6 @@ var Terrain = cc.Class.extend({ // cc.Classを継承
 
 
      this.spriteSheet = new cc.SpriteBatchNode(res.terrain_png);
-     // ランニングアクションを初期化
-     var animFrames = [];
      for (var i = 0; i < 4; i++) {
         var spriteFrame = new cc.SpriteFrame(res.terrain_png, cc.rect(24 * i, 0, 24, 24));
           var str = "terrain" + i;
@@ -32,7 +30,7 @@ var Terrain = cc.Class.extend({ // cc.Classを継承
 
      //space.addBody(body);
       var shape = new cp.BoxShape(body, size.width, size.height);
-      shape.setFriction(1);
+      shape.setFriction(0);
       shape.setElasticity(0);
       shape.tag = tag;
       shape.setCollisionType(shape.tag);
